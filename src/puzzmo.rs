@@ -116,7 +116,7 @@ fn parse_puzzle(p: &str) -> anyhow::Result<crate::Tower> {
     )?)
 }
 
-pub fn get_puzzle(day: Option<String>) -> anyhow::Result<Puzzle> {
+pub fn get_puzzle(game: &str, day: Option<String>) -> anyhow::Result<Puzzle> {
     let client = reqwest::blocking::Client::new();
 
     let data = match client
@@ -141,7 +141,7 @@ pub fn get_puzzle(day: Option<String>) -> anyhow::Result<Puzzle> {
         .daily
         .puzzles
         .into_iter()
-        .find(|puzzle| puzzle.puzzle.game.slug == "spelltower")
+        .find(|puzzle| puzzle.puzzle.game.slug == game)
         .map(|puzzle| puzzle.puzzle.puzzle)
         .ok_or_else(|| anyhow::anyhow!("could not find puzzle"))?;
 

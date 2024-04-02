@@ -6,6 +6,7 @@ pub struct Coster {
 pub struct Annealer<'a> {
     tower: &'a ndarray::Array2<char>,
     root: &'a crate::words::Node,
+    allow_leftovers: bool,
     rng: std::cell::RefCell<rand_xoshiro::Xoshiro256PlusPlus>,
     coster: &'static Coster,
 }
@@ -14,12 +15,14 @@ impl<'a> Annealer<'a> {
     pub fn new(
         tower: &'a ndarray::Array2<char>,
         root: &'a crate::words::Node,
+        allow_leftovers: bool,
         rng: rand_xoshiro::Xoshiro256PlusPlus,
         coster: &'static Coster,
     ) -> Self {
         Self {
             tower,
             root,
+            allow_leftovers,
             rng: std::cell::RefCell::new(rng),
             coster,
         }
@@ -31,6 +34,16 @@ impl<'a> argmin::core::CostFunction for Annealer<'a> {
     type Output = f64;
 
     fn cost(&self, param: &Self::Param) -> Result<Self::Output, argmin::core::Error> {
+        if !self.allow_leftovers {
+            let mut tower = self.tower.clone();
+            for path in param {
+                super::delete_path(&mut tower, path);
+            }
+            if tower.len() - tower.iter().filter(|&&x| x == '\0').count() != 0 {
+                return Ok(std::f64::INFINITY);
+            }
+        }
+
         Ok((self.coster.cost)(&self.tower, param))
     }
 }
@@ -81,14 +94,6 @@ fn best_word_score(tower: &ndarray::Array2<char>, soultion: &[Vec<(usize, usize)
     best_score
 }
 
-fn letters_remaining(tower: &ndarray::Array2<char>, solution: &[Vec<(usize, usize)>]) -> usize {
-    let mut tower = tower.clone();
-    for path in solution {
-        super::delete_path(&mut tower, path);
-    }
-    tower.len() - tower.iter().filter(|&&x| x == '\0').count()
-}
-
 pub const LONGEST_WORD: Coster = Coster {
     target: std::f64::NEG_INFINITY,
     cost: |_tower, solution| -(longest_word(solution) as f64),
@@ -104,7 +109,7 @@ pub const BEST_WORD: Coster = Coster {
     cost: |tower, solution| -(best_word_score(tower, solution) as f64),
 };
 
-pub const FULL_CLEAR: Coster = Coster {
-    target: 0.0,
-    cost: |tower, solution| letters_remaining(tower, solution) as f64,
+pub const FEWEST_WORDS: Coster = Coster {
+    target: 1.0,
+    cost: |_tower, solution| solution.len() as f64,
 };

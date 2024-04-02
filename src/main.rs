@@ -396,7 +396,7 @@ enum Coster {
     TotalScore,
     LongestWord,
     BestWord,
-    FullClear,
+    FewestWords,
 }
 
 impl Coster {
@@ -405,7 +405,7 @@ impl Coster {
             Coster::LongestWord => &annealers::LONGEST_WORD,
             Coster::TotalScore => &annealers::TOTAL_SCORE,
             Coster::BestWord => &annealers::BEST_WORD,
-            Coster::FullClear => &annealers::FULL_CLEAR,
+            Coster::FewestWords => &annealers::FEWEST_WORDS,
         }
     }
 }
@@ -418,8 +418,14 @@ struct Args {
     #[arg(long)]
     day: Option<String>,
 
+    #[arg(long)]
+    allow_leftovers: bool,
+
     #[arg(long, default_value_t = 1000.0)]
     initial_temperature: f64,
+
+    #[arg(long, default_value = "spelltower")]
+    game: String,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -431,7 +437,7 @@ fn main() -> anyhow::Result<()> {
 
     let (words, _) = words::load();
 
-    let puzzle = puzzmo::get_puzzle(args.day)?;
+    let puzzle = puzzmo::get_puzzle(&args.game, args.day)?;
 
     log::info!(day = puzzle.day.as_str(), is_today = puzzle.is_today, coster = args.coster.to_possible_value().unwrap().get_name(); "spelltower solver");
 
@@ -445,6 +451,7 @@ fn main() -> anyhow::Result<()> {
         annealers::Annealer::new(
             &puzzle.tower,
             &words,
+            args.allow_leftovers,
             rand_xoshiro::Xoshiro256PlusPlus::from_entropy(),
             coster,
         ),
