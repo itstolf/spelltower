@@ -15,8 +15,6 @@ fn find_paths(tower: &Tower, root: &words::Node) -> Vec<Vec<(usize, usize)>> {
         path: &[(usize, usize)],
         node: &words::Node,
     ) -> Vec<Vec<(usize, usize)>> {
-        let (n, m) = tower.dim();
-
         let mut paths = vec![];
         if node.is_end() {
             paths.push(path.to_vec());
@@ -37,20 +35,16 @@ fn find_paths(tower: &Tower, root: &words::Node) -> Vec<Vec<(usize, usize)>> {
             let Some(i) = oi.checked_add_signed(di) else {
                 continue;
             };
-
             let Some(j) = oj.checked_add_signed(dj) else {
                 continue;
             };
-
-            if i >= n || j >= m {
-                continue;
-            }
-
             if path.contains(&(i, j)) {
                 continue;
             }
-
-            let Some(child) = node.get(tower[[i, j]].to_ascii_uppercase()) else {
+            let Some(&letter) = tower.get([i, j]) else {
+                continue;
+            };
+            let Some(child) = node.get(letter.to_ascii_uppercase()) else {
                 continue;
             };
 
@@ -115,7 +109,7 @@ fn score_letter(c: char) -> usize {
 }
 
 fn deletable(tower: &Tower, path: &[(usize, usize)]) -> std::collections::HashSet<(usize, usize)> {
-    let (n, m) = tower.dim();
+    let (_, m) = tower.dim();
 
     let mut collected = path
         .iter()
@@ -142,13 +136,13 @@ fn deletable(tower: &Tower, path: &[(usize, usize)]) -> std::collections::HashSe
             let Some(j) = oj.checked_add_signed(dj) else {
                 continue;
             };
-            if i >= n || j >= m {
+            let Some(&letter) = tower.get([i, j]) else {
+                continue;
+            };
+            if letter == '\0' {
                 continue;
             }
-            if tower[[i, j]] == '\0' {
-                continue;
-            }
-            if path.len() >= 5 || tower[[i, j]] == '_' {
+            if path.len() >= 5 || letter == '_' {
                 collected.insert((i, j));
             }
         }
