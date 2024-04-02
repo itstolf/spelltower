@@ -120,7 +120,7 @@ fn deletable(tower: &Tower, path: &[(usize, usize)]) -> std::collections::HashSe
 
     for &(i, j) in path.iter() {
         let c = tower[[i, j]].to_ascii_uppercase();
-        if c != 'J' && c != 'Q' && c != 'X' && c != 'Z' {
+        if !matches!(c, 'J' | 'Q' | 'X' | 'Z') {
             continue;
         }
         collected.extend(
