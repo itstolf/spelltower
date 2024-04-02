@@ -370,18 +370,15 @@ fn pretty_tower(tower: &Tower, path: &[(usize, usize)]) -> String {
     let word = path.iter().map(|&(i, j)| tower[[i, j]]).collect::<String>();
     let score = score_path(&tower, &path);
 
+    let border_length = (m - 1) + m * 3;
+
     let bottom_border = std::iter::repeat("═")
-        .take((m - 1) + m * 3)
+        .take(border_length)
         .collect::<String>();
 
     let top_border = if !path.is_empty() {
         let header = format!("{word:} ({score:})");
-        format!(
-            "═{header}{}",
-            std::iter::repeat("═")
-                .take((m - 1) + m * 3 - header.len() - 1)
-                .collect::<String>()
-        )
+        format!("═{header:═<width$}", width = border_length - 1)
     } else {
         bottom_border.clone()
     };
