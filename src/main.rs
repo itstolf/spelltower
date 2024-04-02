@@ -454,8 +454,13 @@ fn main() -> anyhow::Result<()> {
     let w: usize = w.parse()?;
     let h: usize = h.parse()?;
 
-    let tower =
-        ndarray::Array2::from_shape_vec((h, w), puzzle_iter.flat_map(|row| row.chars()).collect())?;
+    let tower = ndarray::Array2::from_shape_vec(
+        (h, w),
+        puzzle_iter
+            .flat_map(|row| row.chars())
+            .take(w * h)
+            .collect(),
+    )?;
 
     println!("{}", pretty_tower(&tower, &[]));
 
