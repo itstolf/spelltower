@@ -54,11 +54,11 @@ impl<'a> argmin::solver::simulatedannealing::Anneal for Annealer<'a> {
     }
 }
 
-fn longest_word<'a>(_tower: &'a ndarray::Array2<char>, solution: &[Vec<(usize, usize)>]) -> usize {
+fn longest_word(solution: &[Vec<(usize, usize)>]) -> usize {
     solution.iter().map(|v| v.len()).max().unwrap_or(0)
 }
 
-fn total_score<'a>(tower: &'a ndarray::Array2<char>, soultion: &[Vec<(usize, usize)>]) -> usize {
+fn total_score(tower: &ndarray::Array2<char>, soultion: &[Vec<(usize, usize)>]) -> usize {
     let mut tower = tower.clone();
     let mut total_score = 0;
     for path in soultion {
@@ -71,10 +71,7 @@ fn total_score<'a>(tower: &'a ndarray::Array2<char>, soultion: &[Vec<(usize, usi
     total_score
 }
 
-fn best_word_score<'a>(
-    tower: &'a ndarray::Array2<char>,
-    soultion: &[Vec<(usize, usize)>],
-) -> usize {
+fn best_word_score(tower: &ndarray::Array2<char>, soultion: &[Vec<(usize, usize)>]) -> usize {
     let mut tower = tower.clone();
     let mut best_score = 0;
     for path in soultion {
@@ -84,10 +81,7 @@ fn best_word_score<'a>(
     best_score
 }
 
-fn letters_remaining<'a>(
-    tower: &'a ndarray::Array2<char>,
-    solution: &[Vec<(usize, usize)>],
-) -> usize {
+fn letters_remaining(tower: &ndarray::Array2<char>, solution: &[Vec<(usize, usize)>]) -> usize {
     let mut tower = tower.clone();
     for path in solution {
         super::delete_path(&mut tower, path);
@@ -97,7 +91,7 @@ fn letters_remaining<'a>(
 
 pub const LONGEST_WORD: Coster = Coster {
     target: std::f64::NEG_INFINITY,
-    cost: |tower, solution| -(longest_word(tower, solution) as f64),
+    cost: |_tower, solution| -(longest_word(solution) as f64),
 };
 
 pub const TOTAL_SCORE: Coster = Coster {
