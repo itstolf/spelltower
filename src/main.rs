@@ -23,42 +23,46 @@ fn find_paths(tower: &Tower, root: &words::Node) -> Vec<Vec<(usize, usize)>> {
         }
 
         let (oi, oj) = path.last().unwrap();
-        for di in -1..=1 {
-            for dj in -1..=1 {
-                if di == 0 && dj == 0 {
-                    continue;
-                }
 
-                let Some(i) = oi.checked_add_signed(di) else {
-                    continue;
-                };
+        for (di, dj) in [
+            (-1, -1),
+            (-1, 0),
+            (-1, 1),
+            (0, -1),
+            (0, 1),
+            (1, -1),
+            (1, 0),
+            (1, 1),
+        ] {
+            let Some(i) = oi.checked_add_signed(di) else {
+                continue;
+            };
 
-                let Some(j) = oj.checked_add_signed(dj) else {
-                    continue;
-                };
+            let Some(j) = oj.checked_add_signed(dj) else {
+                continue;
+            };
 
-                if i >= n || j >= m {
-                    continue;
-                }
-
-                if path.contains(&(i, j)) {
-                    continue;
-                }
-
-                let Some(child) = node.get(tower[[i, j]].to_ascii_uppercase()) else {
-                    continue;
-                };
-
-                paths.extend(helper(
-                    tower,
-                    &path
-                        .iter()
-                        .cloned()
-                        .chain(std::iter::once((i, j)))
-                        .collect::<Vec<_>>(),
-                    child,
-                ));
+            if i >= n || j >= m {
+                continue;
             }
+
+            if path.contains(&(i, j)) {
+                continue;
+            }
+
+            let Some(child) = node.get(tower[[i, j]].to_ascii_uppercase()) else {
+                continue;
+            };
+
+            paths.extend(helper(
+                tower,
+                &path
+                    .iter()
+                    .cloned()
+                    .chain(std::iter::once((i, j)))
+                    .collect::<Vec<_>>(),
+                child,
+            ));
         }
 
         paths
@@ -317,54 +321,55 @@ fn pretty_tower(tower: &Tower, path: &[(usize, usize)]) -> String {
 
     let mut pretty = ndarray::Array2::from_elem((n * 2 + 1, m * 2 + 1), " ".to_string());
 
-    for i in 0..n {
-        for j in 0..m {
-            let pi = i * 2 + 1;
-            let pj = j * 2 + 1;
+    for (i, j) in (0..n).flat_map(|i| (0..m).map(move |j| (i, j))) {
+        let pi = i * 2 + 1;
+        let pj = j * 2 + 1;
 
-            for di in -1..=1 {
-                for dj in -1..=1 {
-                    if di == 0 && dj == 0 {
-                        continue;
+        for (di, dj) in [
+            (-1, -1),
+            (-1, 0),
+            (-1, 1),
+            (0, -1),
+            (0, 1),
+            (1, -1),
+            (1, 0),
+            (1, 1),
+        ] {
+            let li = (pi as isize + di) as usize;
+            let lj = (pj as isize + dj) as usize;
+
+            let link = links[[li, lj]];
+            pretty[[li, lj]] = match link {
+                LinkType::None => {
+                    if dj == 0 {
+                        "   "
+                    } else {
+                        " "
                     }
-
-                    let li = (pi as isize + di) as usize;
-                    let lj = (pj as isize + dj) as usize;
-
-                    let link = links[[li, lj]];
-                    pretty[[li, lj]] = match link {
-                        LinkType::None => {
-                            if dj == 0 {
-                                "   "
-                            } else {
-                                " "
-                            }
-                        }
-                        LinkType::Vertical => "\x1b[1;35m │ \x1b[0m",
-                        LinkType::Horizontal => "\x1b[1;35m─\x1b[0m",
-                        LinkType::Diagonal => "\x1b[1;35m╲\x1b[0m",
-                        LinkType::Antidiagonal => "\x1b[1;35m╱\x1b[0m",
-                        LinkType::Cross => "\x1b[1;35m╳\x1b[0m",
-                    }
-                    .to_string();
                 }
+                LinkType::Vertical => "\x1b[1;35m │ \x1b[0m",
+                LinkType::Horizontal => "\x1b[1;35m─\x1b[0m",
+                LinkType::Diagonal => "\x1b[1;35m╲\x1b[0m",
+                LinkType::Antidiagonal => "\x1b[1;35m╱\x1b[0m",
+                LinkType::Cross => "\x1b[1;35m╳\x1b[0m",
             }
-
-            let c = match tower[[i, j]] {
-                '\0' => ' ',
-                '_' => '░',
-                v => v,
-            };
-            pretty[[pi, pj]] = if path.first() == Some(&(i, j)) {
-                format!("\x1b[1;37;45m {c} \x1b[0m")
-            } else if path.contains(&(i, j)) {
-                format!("\x1b[37;45m {c} \x1b[0m")
-            } else if deletable.contains(&(i, j)) {
-                format!("\x1b[35m {c} \x1b[0m")
-            } else {
-                format!(" {c} ")
-            };
+            .to_string();
         }
+
+        let c = match tower[[i, j]] {
+            '\0' => ' ',
+            '_' => '░',
+            v => v,
+        };
+        pretty[[pi, pj]] = if path.first() == Some(&(i, j)) {
+            format!("\x1b[1;37;45m {c} \x1b[0m")
+        } else if path.contains(&(i, j)) {
+            format!("\x1b[37;45m {c} \x1b[0m")
+        } else if deletable.contains(&(i, j)) {
+            format!("\x1b[35m {c} \x1b[0m")
+        } else {
+            format!(" {c} ")
+        };
     }
 
     let word = path.iter().map(|&(i, j)| tower[[i, j]]).collect::<String>();
