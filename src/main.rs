@@ -426,6 +426,9 @@ struct Args {
 
     #[arg(long, default_value = "spelltower")]
     game: String,
+
+    #[arg(long, default_value_t = 5000)]
+    reannealing_fixed: u64,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -444,7 +447,8 @@ fn main() -> anyhow::Result<()> {
     println!("{}", pretty_tower(&puzzle.tower, &[]));
 
     let solver =
-        argmin::solver::simulatedannealing::SimulatedAnnealing::new(args.initial_temperature)?;
+        argmin::solver::simulatedannealing::SimulatedAnnealing::new(args.initial_temperature)?
+            .with_reannealing_fixed(args.reannealing_fixed);
 
     let coster = args.coster.as_coster();
     let res = argmin::core::Executor::new(
