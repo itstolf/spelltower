@@ -9,6 +9,17 @@ use rayon::iter::{IntoParallelIterator as _, ParallelIterator as _};
 
 type Tower = ndarray::Array2<char>;
 
+const EIGHT_NEIGHBORS: &[(isize, isize)] = &[
+    (-1, -1),
+    (-1, 0),
+    (-1, 1),
+    (0, -1),
+    (0, 1),
+    (1, -1),
+    (1, 0),
+    (1, 1),
+];
+
 fn find_paths(tower: &Tower, root: &words::Node) -> Vec<Vec<(usize, usize)>> {
     fn helper(
         tower: &Tower,
@@ -22,16 +33,7 @@ fn find_paths(tower: &Tower, root: &words::Node) -> Vec<Vec<(usize, usize)>> {
 
         let (oi, oj) = path.last().unwrap();
 
-        for (di, dj) in [
-            (-1, -1),
-            (-1, 0),
-            (-1, 1),
-            (0, -1),
-            (0, 1),
-            (1, -1),
-            (1, 0),
-            (1, 1),
-        ] {
+        for &(di, dj) in EIGHT_NEIGHBORS {
             let Some(i) = oi.checked_add_signed(di) else {
                 continue;
             };
@@ -319,16 +321,7 @@ fn pretty_tower(tower: &Tower, path: &[(usize, usize)]) -> String {
         let pi = i * 2 + 1;
         let pj = j * 2 + 1;
 
-        for (di, dj) in [
-            (-1, -1),
-            (-1, 0),
-            (-1, 1),
-            (0, -1),
-            (0, 1),
-            (1, -1),
-            (1, 0),
-            (1, 1),
-        ] {
+        for &(di, dj) in EIGHT_NEIGHBORS {
             let li = (pi as isize + di) as usize;
             let lj = (pj as isize + dj) as usize;
 
