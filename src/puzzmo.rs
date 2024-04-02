@@ -66,7 +66,7 @@ struct Request {
 pub struct Puzzle {
     pub day: String,
     pub is_today: bool,
-    pub puzzle: String,
+    pub tower: crate::Tower,
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -104,9 +104,22 @@ pub fn get_puzzle(day: Option<String>) -> anyhow::Result<Puzzle> {
         .map(|puzzle| puzzle.puzzle.puzzle)
         .ok_or_else(|| anyhow::anyhow!("could not find puzzle"))?;
 
+    let mut puzzle_iter = puzzle.split("\n");
+    let _ = puzzle_iter.next();
+
+    let (w, h) = puzzle_iter.next().unwrap().split_once("x").unwrap();
+    let w: usize = w.parse()?;
+    let h: usize = h.parse()?;
+
     Ok(Puzzle {
         day: data.today_page.daily.day,
         is_today: data.today_page.daily.is_today,
-        puzzle,
+        tower: ndarray::Array2::from_shape_vec(
+            (h, w),
+            puzzle_iter
+                .flat_map(|row| row.chars())
+                .take(w * h)
+                .collect(),
+        )?,
     })
 }

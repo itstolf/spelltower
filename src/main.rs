@@ -447,29 +447,14 @@ fn main() -> anyhow::Result<()> {
 
     log::info!(day = puzzle.day.as_str(), is_today = puzzle.is_today, coster = args.coster.to_possible_value().unwrap().get_name(); "spelltower solver");
 
-    let mut puzzle_iter = puzzle.puzzle.split("\n");
-    let _ = puzzle_iter.next();
-
-    let (w, h) = puzzle_iter.next().unwrap().split_once("x").unwrap();
-    let w: usize = w.parse()?;
-    let h: usize = h.parse()?;
-
-    let tower = ndarray::Array2::from_shape_vec(
-        (h, w),
-        puzzle_iter
-            .flat_map(|row| row.chars())
-            .take(w * h)
-            .collect(),
-    )?;
-
-    println!("{}", pretty_tower(&tower, &[]));
+    println!("{}", pretty_tower(&puzzle.tower, &[]));
 
     let solver = argmin::solver::simulatedannealing::SimulatedAnnealing::new(700.0)?;
 
     let coster = args.coster.as_coster();
     let res = argmin::core::Executor::new(
         annealers::Annealer::new(
-            &tower,
+            &puzzle.tower,
             &words,
             rand_xoshiro::Xoshiro256PlusPlus::from_entropy(),
             coster,
@@ -478,7 +463,7 @@ fn main() -> anyhow::Result<()> {
     )
     .configure(|state| {
         state
-            .param(solve_greedy(&tower, &words))
+            .param(solve_greedy(&puzzle.tower, &words))
             .target_cost(coster.target)
     })
     .add_observer(
@@ -488,7 +473,7 @@ fn main() -> anyhow::Result<()> {
     .run()?;
     println!();
 
-    let mut tower = tower.clone();
+    let mut tower = puzzle.tower.clone();
     let mut total_score = 0;
 
     for path in res.state.best_param.unwrap() {
