@@ -75,6 +75,32 @@ pub struct Error {
     pub errors: Vec<response::Error>,
 }
 
+fn parse_puzzle(p: &str) -> anyhow::Result<crate::Tower> {
+    let mut puzzle_iter = p.split("\n");
+    let _ = puzzle_iter
+        .next()
+        .ok_or_else(|| anyhow::anyhow!("no puzzle lines"))?;
+
+    let dim = puzzle_iter
+        .next()
+        .ok_or_else(|| anyhow::anyhow!("no puzzle lines"))?;
+
+    let (w, h) = dim
+        .split_once("x")
+        .ok_or_else(|| anyhow::anyhow!("invalid dimensions: {dim}"))?;
+
+    let w: usize = w.parse()?;
+    let h: usize = h.parse()?;
+
+    Ok(ndarray::Array2::from_shape_vec(
+        (h, w),
+        puzzle_iter
+            .flat_map(|row| row.chars())
+            .take(w * h)
+            .collect(),
+    )?)
+}
+
 pub fn get_puzzle(day: Option<String>) -> anyhow::Result<Puzzle> {
     let client = reqwest::blocking::Client::new();
 
@@ -104,22 +130,9 @@ pub fn get_puzzle(day: Option<String>) -> anyhow::Result<Puzzle> {
         .map(|puzzle| puzzle.puzzle.puzzle)
         .ok_or_else(|| anyhow::anyhow!("could not find puzzle"))?;
 
-    let mut puzzle_iter = puzzle.split("\n");
-    let _ = puzzle_iter.next();
-
-    let (w, h) = puzzle_iter.next().unwrap().split_once("x").unwrap();
-    let w: usize = w.parse()?;
-    let h: usize = h.parse()?;
-
     Ok(Puzzle {
         day: data.today_page.daily.day,
         is_today: data.today_page.daily.is_today,
-        tower: ndarray::Array2::from_shape_vec(
-            (h, w),
-            puzzle_iter
-                .flat_map(|row| row.chars())
-                .take(w * h)
-                .collect(),
-        )?,
+        tower: parse_puzzle(&puzzle)?,
     })
 }
