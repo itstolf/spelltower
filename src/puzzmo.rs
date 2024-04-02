@@ -81,39 +81,13 @@ struct Request {
 pub struct Puzzle {
     pub day: String,
     pub is_today: bool,
-    pub tower: crate::Tower,
+    pub puzzle: String,
 }
 
 #[derive(thiserror::Error, Debug)]
 #[error("puzzmo: {errors:?}")]
 pub struct Error {
     pub errors: Vec<response::Error>,
-}
-
-fn parse_puzzle(p: &str) -> anyhow::Result<crate::Tower> {
-    let mut puzzle_iter = p.split("\n");
-    let _ = puzzle_iter
-        .next()
-        .ok_or_else(|| anyhow::anyhow!("no puzzle lines"))?;
-
-    let dim = puzzle_iter
-        .next()
-        .ok_or_else(|| anyhow::anyhow!("no puzzle lines"))?;
-
-    let (w, h) = dim
-        .split_once("x")
-        .ok_or_else(|| anyhow::anyhow!("invalid dimensions: {dim}"))?;
-
-    let w: usize = w.parse()?;
-    let h: usize = h.parse()?;
-
-    Ok(ndarray::Array2::from_shape_vec(
-        (h, w),
-        puzzle_iter
-            .flat_map(|row| row.chars())
-            .take(w * h)
-            .collect(),
-    )?)
 }
 
 pub fn get_puzzle(game: &str, day: Option<String>) -> anyhow::Result<Puzzle> {
@@ -148,6 +122,6 @@ pub fn get_puzzle(game: &str, day: Option<String>) -> anyhow::Result<Puzzle> {
     Ok(Puzzle {
         day: data.today_page.daily.day,
         is_today: data.today_page.daily.is_today,
-        tower: parse_puzzle(&puzzle)?,
+        puzzle,
     })
 }

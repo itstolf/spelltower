@@ -418,6 +418,32 @@ struct Args {
     reannealing_fixed: u64,
 }
 
+fn parse_puzzle(p: &str) -> anyhow::Result<crate::Tower> {
+    let mut puzzle_iter = p.split("\n");
+    let _ = puzzle_iter
+        .next()
+        .ok_or_else(|| anyhow::anyhow!("no puzzle lines"))?;
+
+    let dim = puzzle_iter
+        .next()
+        .ok_or_else(|| anyhow::anyhow!("no puzzle lines"))?;
+
+    let (w, h) = dim
+        .split_once("x")
+        .ok_or_else(|| anyhow::anyhow!("invalid dimensions: {dim}"))?;
+
+    let w: usize = w.parse()?;
+    let h: usize = h.parse()?;
+
+    Ok(ndarray::Array2::from_shape_vec(
+        (h, w),
+        puzzle_iter
+            .flat_map(|row| row.chars())
+            .take(w * h)
+            .collect(),
+    )?)
+}
+
 fn main() -> anyhow::Result<()> {
     env_logger::builder()
         .filter_level(log::LevelFilter::Info)
@@ -431,7 +457,8 @@ fn main() -> anyhow::Result<()> {
 
     log::info!(day = puzzle.day.as_str(), is_today = puzzle.is_today, coster = args.coster.to_possible_value().unwrap().get_name(); "spelltower solver");
 
-    println!("{}", pretty_tower(&puzzle.tower, &[]));
+    let tower = parse_puzzle(&puzzle.puzzle)?;
+    println!("{}", pretty_tower(&tower, &[]));
 
     let solver =
         argmin::solver::simulatedannealing::SimulatedAnnealing::new(args.initial_temperature)?
@@ -440,7 +467,7 @@ fn main() -> anyhow::Result<()> {
     let coster = args.coster.as_coster();
     let res = argmin::core::Executor::new(
         annealers::Annealer::new(
-            &puzzle.tower,
+            &tower,
             &words,
             args.allow_leftovers,
             rand_xoshiro::Xoshiro256PlusPlus::from_entropy(),
@@ -450,7 +477,7 @@ fn main() -> anyhow::Result<()> {
     )
     .configure(|state| {
         state
-            .param(solve_greedy(&puzzle.tower, &words))
+            .param(solve_greedy(&tower, &words))
             .target_cost(coster.target)
     })
     .add_observer(
@@ -460,7 +487,7 @@ fn main() -> anyhow::Result<()> {
     .run()?;
     println!();
 
-    let mut tower = puzzle.tower.clone();
+    let mut tower = tower.clone();
     let mut total_score = 0;
 
     for path in res.state.best_param.unwrap() {
