@@ -430,6 +430,9 @@ struct Args {
 
     #[arg(long)]
     day: Option<String>,
+
+    #[arg(long, default_value_t = 1000.0)]
+    initial_temperature: f64,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -447,7 +450,8 @@ fn main() -> anyhow::Result<()> {
 
     println!("{}", pretty_tower(&puzzle.tower, &[]));
 
-    let solver = argmin::solver::simulatedannealing::SimulatedAnnealing::new(700.0)?;
+    let solver =
+        argmin::solver::simulatedannealing::SimulatedAnnealing::new(args.initial_temperature)?;
 
     let coster = args.coster.as_coster();
     let res = argmin::core::Executor::new(
