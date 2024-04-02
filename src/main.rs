@@ -447,19 +447,16 @@ fn main() -> anyhow::Result<()> {
 
     log::info!(day = puzzle.day.as_str(), is_today = puzzle.is_today, coster = args.coster.to_possible_value().unwrap().get_name(); "spelltower solver");
 
-    let tower = {
-        let mut lines = vec![];
-        for line in puzzle.puzzle.split("\n").skip(2) {
-            lines.push(line.chars().collect::<Vec<_>>());
-        }
-        ndarray::Array2::from_shape_fn(
-            (
-                lines.len(),
-                lines.iter().map(|line| line.len()).max().unwrap(),
-            ),
-            |(i, j)| lines[i].get(j).cloned().unwrap_or('_'),
-        )
-    };
+    let mut puzzle_iter = puzzle.puzzle.split("\n");
+    let _ = puzzle_iter.next();
+
+    let (w, h) = puzzle_iter.next().unwrap().split_once("x").unwrap();
+    let w: usize = w.parse()?;
+    let h: usize = h.parse()?;
+
+    let tower =
+        ndarray::Array2::from_shape_vec((h, w), puzzle_iter.flat_map(|row| row.chars()).collect())?;
+
     println!("{}", pretty_tower(&tower, &[]));
 
     let solver = argmin::solver::simulatedannealing::SimulatedAnnealing::new(700.0)?;
