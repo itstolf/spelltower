@@ -18,7 +18,7 @@ fn find_paths(tower: &Tower, root: &words::Node) -> Vec<Vec<(usize, usize)>> {
         let (n, m) = tower.dim();
 
         let mut paths = vec![];
-        if node.is_end {
+        if node.is_end() {
             paths.push(path.to_vec());
         }
 
@@ -45,7 +45,7 @@ fn find_paths(tower: &Tower, root: &words::Node) -> Vec<Vec<(usize, usize)>> {
                     continue;
                 }
 
-                let Some(child) = node.children.get(&tower[[i, j]].to_ascii_uppercase()) else {
+                let Some(child) = node.get(tower[[i, j]].to_ascii_uppercase()) else {
                     continue;
                 };
 
@@ -70,7 +70,7 @@ fn find_paths(tower: &Tower, root: &words::Node) -> Vec<Vec<(usize, usize)>> {
         .into_par_iter()
         .flat_map(|i| (0..m).into_par_iter().map(move |j| (i, j)))
         .flat_map(|(i, j)| {
-            let Some(child) = root.children.get(&tower[[i, j]]) else {
+            let Some(child) = root.get(tower[[i, j]].to_ascii_uppercase()) else {
                 return vec![];
             };
             helper(tower, &[(i, j)], child)
@@ -367,11 +367,7 @@ fn pretty_tower(tower: &Tower, path: &[(usize, usize)]) -> String {
         }
     }
 
-    let word = path
-        .iter()
-        .map(|&(i, j)| tower[[i, j]])
-        .collect::<String>()
-        .to_ascii_uppercase();
+    let word = path.iter().map(|&(i, j)| tower[[i, j]]).collect::<String>();
     let score = score_path(&tower, &path);
 
     let bottom_border = std::iter::repeat("═")

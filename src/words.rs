@@ -2,8 +2,21 @@ use std::io::BufRead as _;
 
 #[derive(Default, Debug)]
 pub struct Node {
-    pub children: std::collections::HashMap<char, Node>,
-    pub is_end: bool,
+    children: [Option<Box<Node>>; 26],
+    is_end: bool,
+}
+
+impl Node {
+    pub fn get(&self, c: char) -> Option<&Node> {
+        self.children
+            .get(c as usize - 'A' as usize)
+            .map(|v| v.as_ref().map(|v| v.as_ref()))
+            .flatten()
+    }
+
+    pub fn is_end(&self) -> bool {
+        self.is_end
+    }
 }
 
 pub fn load() -> (Node, usize) {
@@ -14,10 +27,8 @@ pub fn load() -> (Node, usize) {
         let word = word.unwrap();
         let mut node = &mut root;
         for letter in word.chars() {
-            node = node
-                .children
-                .entry(letter)
-                .or_insert_with(|| Node::default());
+            node = node.children[letter as usize - 'A' as usize]
+                .get_or_insert_with(|| Box::new(Node::default()));
         }
         if word.len() > max_len {
             max_len = word.len();
