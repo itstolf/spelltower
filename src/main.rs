@@ -196,6 +196,13 @@ fn score_path(tower: &Tower, path: &[(usize, usize)]) -> usize {
             + 1)
 }
 
+fn is_almost_there(tower: &Tower) -> bool {
+    tower
+        .columns()
+        .into_iter()
+        .all(|row| row.into_iter().filter(|&&x| x != '\0').count() <= 2)
+}
+
 fn nudge_solution(
     tower: &Tower,
     root: &words::Node,
@@ -481,6 +488,9 @@ fn main() -> anyhow::Result<()> {
         total_score += score;
         println!("{}", pretty_tower(&tower, &path));
         delete_path(&mut tower, &path);
+    }
+    if is_almost_there(&tower) {
+        total_score += 1000;
     }
     if tower.iter().filter(|&&x| x == '\0').count() == tower.len() {
         total_score += 1000;

@@ -81,6 +81,9 @@ fn total_score(tower: &ndarray::Array2<char>, soultion: &[Vec<(usize, usize)>]) 
     if tower.iter().filter(|&&x| x == '\0').count() == tower.len() {
         total_score += 1000;
     }
+    if super::is_almost_there(&tower) {
+        total_score += 1000;
+    }
     total_score
 }
 
