@@ -1,6 +1,21 @@
 const ENDPOINT: &str = "https://www.puzzmo.com/_api/prod/graphql";
 
-const GQL_QUERY: &str = r#"query TodayScreenQuery($day: String) { todayPage(day: $day) { daily { isToday day puzzles { puzzle { puzzle game { slug } } } } } }"#;
+const GQL_QUERY: &str = r#"query TodayScreenQuery($day: String) {
+    todayPage(day: $day) {
+        daily {
+            isToday
+            day
+            puzzles {
+                puzzle {
+                    puzzle
+                    game {
+                        slug
+                    }
+                }
+            }
+        }
+    }
+}"#;
 
 #[derive(serde::Deserialize)]
 #[serde(untagged, rename_all = "camelCase")]
