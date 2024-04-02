@@ -6,7 +6,7 @@ pub struct Coster {
 pub struct Annealer<'a> {
     tower: &'a ndarray::Array2<char>,
     root: &'a crate::words::Node,
-    rng: std::sync::Arc<std::sync::Mutex<rand_xoshiro::Xoshiro256PlusPlus>>,
+    rng: std::cell::RefCell<rand_xoshiro::Xoshiro256PlusPlus>,
     coster: &'static Coster,
 }
 
@@ -20,7 +20,7 @@ impl<'a> Annealer<'a> {
         Self {
             tower,
             root,
-            rng: std::sync::Arc::new(std::sync::Mutex::new(rng)),
+            rng: std::cell::RefCell::new(rng),
             coster,
         }
     }
@@ -45,7 +45,7 @@ impl<'a> argmin::solver::simulatedannealing::Anneal for Annealer<'a> {
         param: &Self::Param,
         temp: Self::Float,
     ) -> Result<Self::Output, anyhow::Error> {
-        let mut rng = self.rng.lock().unwrap();
+        let mut rng = self.rng.borrow_mut();
         let mut solution = param.to_vec();
         for _ in 0..(temp.floor() as u64 + 1) {
             super::nudge_solution(&self.tower, &self.root, &mut solution, &mut *rng);
