@@ -1,8 +1,7 @@
 mod annealers;
 mod observer;
+mod puzzmo;
 mod words;
-
-use std::io::BufRead as _;
 
 use clap::{Parser as _, ValueEnum as _};
 use rand::SeedableRng as _;
@@ -145,7 +144,7 @@ fn deletable(tower: &Tower, path: &[(usize, usize)]) -> std::collections::HashSe
             if tower[[i, j]] == '\0' {
                 continue;
             }
-            if path.len() >= 5 || tower[[i, j]] == ' ' {
+            if path.len() >= 5 || tower[[i, j]] == '_' {
                 collected.insert((i, j));
             }
         }
@@ -248,8 +247,6 @@ fn solve_greedy(tower: &Tower, root: &words::Node) -> Vec<Vec<(usize, usize)>> {
 fn pretty_tower(tower: &Tower, path: &[(usize, usize)]) -> String {
     let (n, m) = tower.dim();
 
-    let deletable = deletable(tower, path);
-
     #[derive(Clone, Copy, PartialEq)]
     enum LinkType {
         None,
@@ -261,57 +258,60 @@ fn pretty_tower(tower: &Tower, path: &[(usize, usize)]) -> String {
     }
 
     let mut links = ndarray::Array2::from_elem((n * 2 + 1, m * 2 + 1), LinkType::None);
+    let deletable: std::collections::HashSet<(usize, usize)> = deletable(tower, path);
 
-    for (&(ia, ja), &(ib, jb)) in path.iter().zip(path[1..].iter()) {
-        let li = ia * 2 + 1;
-        let lj = ja * 2 + 1;
+    if !path.is_empty() {
+        for (&(ia, ja), &(ib, jb)) in path.iter().zip(path[1..].iter()) {
+            let li = ia * 2 + 1;
+            let lj = ja * 2 + 1;
 
-        let di = ib as isize - ia as isize;
-        let dj = jb as isize - ja as isize;
+            let di = ib as isize - ia as isize;
+            let dj = jb as isize - ja as isize;
 
-        let l = &mut links[[(li as isize + di) as usize, (lj as isize + dj) as usize]];
-        match (di, dj) {
-            (-1, 0) => {
-                *l = LinkType::Vertical;
+            let l = &mut links[[(li as isize + di) as usize, (lj as isize + dj) as usize]];
+            match (di, dj) {
+                (-1, 0) => {
+                    *l = LinkType::Vertical;
+                }
+                (1, 0) => {
+                    *l = LinkType::Vertical;
+                }
+                (0, -1) => {
+                    *l = LinkType::Horizontal;
+                }
+                (0, 1) => {
+                    *l = LinkType::Horizontal;
+                }
+                (-1, -1) => {
+                    *l = if *l == LinkType::Antidiagonal {
+                        LinkType::Cross
+                    } else {
+                        LinkType::Diagonal
+                    };
+                }
+                (1, -1) => {
+                    *l = if *l == LinkType::Diagonal {
+                        LinkType::Cross
+                    } else {
+                        LinkType::Antidiagonal
+                    };
+                }
+                (-1, 1) => {
+                    *l = if *l == LinkType::Diagonal {
+                        LinkType::Cross
+                    } else {
+                        LinkType::Antidiagonal
+                    };
+                }
+                (1, 1) => {
+                    *l = if *l == LinkType::Antidiagonal {
+                        LinkType::Cross
+                    } else {
+                        LinkType::Diagonal
+                    };
+                }
+                _ => unreachable!(),
             }
-            (1, 0) => {
-                *l = LinkType::Vertical;
-            }
-            (0, -1) => {
-                *l = LinkType::Horizontal;
-            }
-            (0, 1) => {
-                *l = LinkType::Horizontal;
-            }
-            (-1, -1) => {
-                *l = if *l == LinkType::Antidiagonal {
-                    LinkType::Cross
-                } else {
-                    LinkType::Diagonal
-                };
-            }
-            (1, -1) => {
-                *l = if *l == LinkType::Diagonal {
-                    LinkType::Cross
-                } else {
-                    LinkType::Antidiagonal
-                };
-            }
-            (-1, 1) => {
-                *l = if *l == LinkType::Diagonal {
-                    LinkType::Cross
-                } else {
-                    LinkType::Antidiagonal
-                };
-            }
-            (1, 1) => {
-                *l = if *l == LinkType::Antidiagonal {
-                    LinkType::Cross
-                } else {
-                    LinkType::Diagonal
-                };
-            }
-            _ => unreachable!(),
         }
     }
 
@@ -352,10 +352,10 @@ fn pretty_tower(tower: &Tower, path: &[(usize, usize)]) -> String {
 
             let c = match tower[[i, j]] {
                 '\0' => ' ',
-                ' ' => '░',
+                '_' => '░',
                 v => v,
             };
-            pretty[[pi, pj]] = if path[0] == (i, j) {
+            pretty[[pi, pj]] = if path.first() == Some(&(i, j)) {
                 format!("\x1b[1;37;45m {c} \x1b[0m")
             } else if path.contains(&(i, j)) {
                 format!("\x1b[37;45m {c} \x1b[0m")
@@ -367,18 +367,28 @@ fn pretty_tower(tower: &Tower, path: &[(usize, usize)]) -> String {
         }
     }
 
-    let word = path.iter().map(|&(i, j)| tower[[i, j]]).collect::<String>();
+    let word = path
+        .iter()
+        .map(|&(i, j)| tower[[i, j]])
+        .collect::<String>()
+        .to_ascii_uppercase();
     let score = score_path(&tower, &path);
-
-    let header = format!("{word:} ({score:})");
-
-    let top_border = std::iter::repeat("═")
-        .take((m - 1) + m * 3 - header.len() - 1)
-        .collect::<String>();
 
     let bottom_border = std::iter::repeat("═")
         .take((m - 1) + m * 3)
         .collect::<String>();
+
+    let top_border = if !path.is_empty() {
+        let header = format!("{word:} ({score:})");
+        format!(
+            "═{header}{}",
+            std::iter::repeat("═")
+                .take((m - 1) + m * 3 - header.len() - 1)
+                .collect::<String>()
+        )
+    } else {
+        bottom_border.clone()
+    };
 
     let body = pretty
         .slice(ndarray::s![1..n * 2, 1..m * 2])
@@ -393,7 +403,7 @@ fn pretty_tower(tower: &Tower, path: &[(usize, usize)]) -> String {
         .collect::<Vec<_>>()
         .join("\n");
 
-    format!("╔═{header}{top_border}╗\n{body}\n╚{bottom_border}╝")
+    format!("╔{top_border}╗\n{body}\n╚{bottom_border}╝")
 }
 
 #[derive(clap::ValueEnum, Clone)]
@@ -419,6 +429,9 @@ impl Coster {
 struct Args {
     #[arg(long, default_value = "total-score")]
     coster: Coster,
+
+    #[arg(long)]
+    day: Option<String>,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -427,15 +440,16 @@ fn main() -> anyhow::Result<()> {
         .init();
 
     let args = Args::parse();
-    log::info!(coster = args.coster.to_possible_value().unwrap().get_name(); "spelltower solver");
 
     let (words, _) = words::load();
 
+    let puzzle = puzzmo::get_puzzle(args.day)?;
+
+    log::info!(day = puzzle.day.as_str(), is_today = puzzle.is_today, coster = args.coster.to_possible_value().unwrap().get_name(); "spelltower solver");
+
     let tower = {
         let mut lines = vec![];
-        let stdin = std::io::stdin();
-        for line in stdin.lock().lines() {
-            let line = line?;
+        for line in puzzle.puzzle.split("\n").skip(2) {
             lines.push(line.chars().collect::<Vec<_>>());
         }
         ndarray::Array2::from_shape_fn(
@@ -443,9 +457,10 @@ fn main() -> anyhow::Result<()> {
                 lines.len(),
                 lines.iter().map(|line| line.len()).max().unwrap(),
             ),
-            |(i, j)| lines[i].get(j).cloned().unwrap_or(' '),
+            |(i, j)| lines[i].get(j).cloned().unwrap_or('_'),
         )
     };
+    println!("{}", pretty_tower(&tower, &[]));
 
     let solver = argmin::solver::simulatedannealing::SimulatedAnnealing::new(700.0)?;
 
