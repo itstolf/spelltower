@@ -40,7 +40,7 @@ impl<'a> argmin::core::CostFunction for Annealer<'a> {
                 super::delete_path(&mut tower, path);
             }
             if tower.len() - tower.iter().filter(|&&x| x == '\0').count() != 0 {
-                return Ok(std::f64::INFINITY);
+                return Ok(std::f64::MAX);
             }
         }
 
