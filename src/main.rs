@@ -277,44 +277,24 @@ fn pretty_tower(tower: &Tower, path: &[(usize, usize)]) -> String {
 
             let l = &mut links[[(li as isize + di) as usize, (lj as isize + dj) as usize]];
             match (di, dj) {
-                (-1, 0) => {
+                (-1, 0) | (1, 0) => {
                     *l = LinkType::Vertical;
                 }
-                (1, 0) => {
-                    *l = LinkType::Vertical;
-                }
-                (0, -1) => {
+                (0, -1) | (0, 1) => {
                     *l = LinkType::Horizontal;
                 }
-                (0, 1) => {
-                    *l = LinkType::Horizontal;
-                }
-                (-1, -1) => {
-                    *l = if *l == LinkType::Antidiagonal {
-                        LinkType::Cross
-                    } else {
+                (-1, -1) | (1, 1) => {
+                    *l = if *l != LinkType::Antidiagonal {
                         LinkType::Diagonal
+                    } else {
+                        LinkType::Cross
                     };
                 }
-                (1, -1) => {
-                    *l = if *l == LinkType::Diagonal {
-                        LinkType::Cross
-                    } else {
+                (1, -1) | (-1, 1) => {
+                    *l = if *l != LinkType::Diagonal {
                         LinkType::Antidiagonal
-                    };
-                }
-                (-1, 1) => {
-                    *l = if *l == LinkType::Diagonal {
-                        LinkType::Cross
                     } else {
-                        LinkType::Antidiagonal
-                    };
-                }
-                (1, 1) => {
-                    *l = if *l == LinkType::Antidiagonal {
                         LinkType::Cross
-                    } else {
-                        LinkType::Diagonal
                     };
                 }
                 _ => unreachable!(),
