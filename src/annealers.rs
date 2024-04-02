@@ -110,7 +110,7 @@ pub const BEST_WORD: Coster = Coster {
     cost: |tower, solution| -(best_word_score(tower, solution) as f64),
 };
 
-pub const LETTERS_REMAINING: Coster = Coster {
+pub const FULL_CLEAR: Coster = Coster {
     target: 0.0,
     cost: |tower, solution| letters_remaining(tower, solution) as f64,
 };

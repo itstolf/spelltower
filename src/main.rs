@@ -411,7 +411,7 @@ enum Coster {
     TotalScore,
     LongestWord,
     BestWord,
-    LettersRemaining,
+    FullClear,
 }
 
 impl Coster {
@@ -420,7 +420,7 @@ impl Coster {
             Coster::LongestWord => &annealers::LONGEST_WORD,
             Coster::TotalScore => &annealers::TOTAL_SCORE,
             Coster::BestWord => &annealers::BEST_WORD,
-            Coster::LettersRemaining => &annealers::LETTERS_REMAINING,
+            Coster::FullClear => &annealers::FULL_CLEAR,
         }
     }
 }
