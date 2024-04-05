@@ -406,6 +406,9 @@ struct Args {
     day: Option<String>,
 
     #[arg(long)]
+    status: Option<String>,
+
+    #[arg(long)]
     allow_leftovers: bool,
 
     #[arg(long, default_value_t = 1000.0)]
@@ -453,7 +456,17 @@ fn main() -> anyhow::Result<()> {
 
     let (words, _) = words::load();
 
-    let puzzle = puzzmo::get_puzzle(&args.game, args.day)?;
+    let puzzle = puzzmo::get_puzzle(
+        &args.game,
+        &args.status.as_ref().map(|v| v.as_str()).unwrap_or_else(|| {
+            if args.game == "cubeclear" {
+                "Experimental"
+            } else {
+                "Vanilla"
+            }
+        }),
+        args.day,
+    )?;
 
     log::info!(day = puzzle.day.as_str(), is_today = puzzle.is_today, coster = args.coster.to_possible_value().unwrap().get_name(); "spelltower solver");
 

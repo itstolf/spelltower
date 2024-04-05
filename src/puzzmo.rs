@@ -6,6 +6,7 @@ const GQL_QUERY: &str = r#"query TodayScreenQuery($day: String) {
             isToday
             day
             puzzles {
+                status
                 puzzle {
                     puzzle
                     game {
@@ -54,6 +55,7 @@ mod response {
     #[derive(serde::Deserialize)]
     #[serde(rename_all = "camelCase")]
     pub struct PuzzleWrapper {
+        pub status: String,
         pub puzzle: Puzzle,
     }
 
@@ -90,7 +92,7 @@ pub struct Error {
     pub errors: Vec<response::Error>,
 }
 
-pub fn get_puzzle(game: &str, day: Option<String>) -> anyhow::Result<Puzzle> {
+pub fn get_puzzle(game: &str, status: &str, day: Option<String>) -> anyhow::Result<Puzzle> {
     let client = reqwest::blocking::Client::new();
 
     let data = match client
@@ -115,7 +117,7 @@ pub fn get_puzzle(game: &str, day: Option<String>) -> anyhow::Result<Puzzle> {
         .daily
         .puzzles
         .into_iter()
-        .find(|puzzle| puzzle.puzzle.game.slug == game)
+        .find(|puzzle| puzzle.puzzle.game.slug == game && puzzle.status == status)
         .map(|puzzle| puzzle.puzzle.puzzle)
         .ok_or_else(|| anyhow::anyhow!("could not find puzzle"))?;
 
