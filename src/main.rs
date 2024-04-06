@@ -4,7 +4,7 @@ mod puzzmo;
 mod words;
 
 use clap::{Parser as _, ValueEnum as _};
-use rand::SeedableRng as _;
+use rand::{seq::IteratorRandom, SeedableRng as _};
 use rayon::iter::{IntoParallelIterator as _, ParallelIterator as _};
 
 type Tower = ndarray::Array2<char>;
@@ -237,8 +237,7 @@ fn nudge_solution(
         delete_path(&mut tower, path);
     }
 
-    let mut next_paths = find_paths(&tower, root);
-    let path = next_paths.swap_remove(rng.gen_range(0..next_paths.len()));
+    let path = find_paths(&tower, root).into_iter().choose(rng).unwrap();
     delete_path(&mut tower, &path);
     solution.push(path);
 
