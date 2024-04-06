@@ -203,6 +203,27 @@ fn is_almost_there(tower: &Tower) -> bool {
         .all(|row| row.into_iter().filter(|&&x| x != '\0').count() <= 2)
 }
 
+fn score_solution(tower: &Tower, solution: &[impl AsRef<[(usize, usize)]>]) -> usize {
+    let mut tower = tower.clone();
+
+    let mut total_score = 0;
+    for path in solution {
+        let score = score_path(&tower, path.as_ref());
+        total_score += score;
+        delete_path(&mut tower, path.as_ref());
+    }
+
+    if is_almost_there(&tower) {
+        total_score += 1000;
+    }
+
+    if tower.iter().filter(|&&x| x == '\0').count() == tower.len() {
+        total_score += 1000;
+    }
+
+    total_score
+}
+
 fn nudge_solution(
     tower: &Tower,
     root: &words::Node,
@@ -500,22 +521,10 @@ fn main() -> anyhow::Result<()> {
     .run()?;
     println!();
 
-    let mut tower = tower.clone();
-    let mut total_score = 0;
-
-    for path in res.state.best_param.unwrap() {
-        let score = score_path(&tower, &path);
-        total_score += score;
-        println!("{}", pretty_tower(&tower, &path));
-        delete_path(&mut tower, &path);
-    }
-    if is_almost_there(&tower) {
-        total_score += 1000;
-    }
-    if tower.iter().filter(|&&x| x == '\0').count() == tower.len() {
-        total_score += 1000;
-    }
-    println!("TOTAL SCORE: {total_score}");
+    println!(
+        "TOTAL SCORE: {}",
+        score_solution(&tower, &res.state.best_param.unwrap())
+    );
 
     Ok(())
 }

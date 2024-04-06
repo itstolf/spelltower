@@ -44,7 +44,7 @@ impl<'a> argmin::core::CostFunction for Annealer<'a> {
             }
         }
 
-        Ok((self.coster.cost)(&self.tower, param))
+        Ok((self.coster.cost)(&self.tower, &param))
     }
 }
 
@@ -67,32 +67,19 @@ impl<'a> argmin::solver::simulatedannealing::Anneal for Annealer<'a> {
     }
 }
 
-fn longest_word(solution: &[Vec<(usize, usize)>]) -> usize {
-    solution.iter().map(|v| v.len()).max().unwrap_or(0)
+fn longest_word(solution: &[impl AsRef<[(usize, usize)]>]) -> usize {
+    solution.iter().map(|v| v.as_ref().len()).max().unwrap_or(0)
 }
 
-fn total_score(tower: &ndarray::Array2<char>, soultion: &[Vec<(usize, usize)>]) -> usize {
-    let mut tower = tower.clone();
-    let mut total_score = 0;
-    for path in soultion {
-        total_score += super::score_path(&tower, &path);
-        super::delete_path(&mut tower, path);
-    }
-    if tower.iter().filter(|&&x| x == '\0').count() == tower.len() {
-        total_score += 1000;
-    }
-    if super::is_almost_there(&tower) {
-        total_score += 1000;
-    }
-    total_score
-}
-
-fn best_word_score(tower: &ndarray::Array2<char>, soultion: &[Vec<(usize, usize)>]) -> usize {
+fn best_word_score(
+    tower: &ndarray::Array2<char>,
+    solution: &[impl AsRef<[(usize, usize)]>],
+) -> usize {
     let mut tower = tower.clone();
     let mut best_score = 0;
-    for path in soultion {
-        best_score = best_score.max(super::score_path(&tower, &path));
-        super::delete_path(&mut tower, path);
+    for path in solution {
+        best_score = best_score.max(super::score_path(&tower, path.as_ref()));
+        super::delete_path(&mut tower, path.as_ref());
     }
     best_score
 }
@@ -104,7 +91,7 @@ pub const LONGEST_WORD: Coster = Coster {
 
 pub const TOTAL_SCORE: Coster = Coster {
     target: std::f64::NEG_INFINITY,
-    cost: |tower, solution| -(total_score(tower, solution) as f64),
+    cost: |tower, solution| -(super::score_solution(tower, solution) as f64),
 };
 
 pub const BEST_WORD: Coster = Coster {
