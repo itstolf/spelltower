@@ -520,10 +520,17 @@ fn main() -> anyhow::Result<()> {
     .run()?;
     println!();
 
-    println!(
-        "TOTAL SCORE: {}",
-        score_solution(&tower, &res.state.best_param.unwrap())
-    );
+    let solution = res.state.best_param.unwrap();
+
+    {
+        let mut tower = tower.clone();
+        for path in solution.iter() {
+            println!("{}", pretty_tower(&tower, &path));
+            delete_path(&mut tower, &path);
+        }
+    }
+
+    println!("TOTAL SCORE: {}", score_solution(&tower, &solution));
 
     Ok(())
 }
