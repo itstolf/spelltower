@@ -476,7 +476,7 @@ fn main() -> anyhow::Result<()> {
 
     let (words, _) = words::load();
 
-    let puzzle = puzzmo::get_puzzle(
+    let puzzle = puzzmo::load(
         &args.game,
         &args.status.as_ref().map(|v| v.as_str()).unwrap_or_else(|| {
             if args.game == "cubeclear" {

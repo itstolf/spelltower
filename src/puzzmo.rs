@@ -92,7 +92,7 @@ pub struct Error {
     pub errors: Vec<response::Error>,
 }
 
-pub fn get_puzzle(game: &str, status: &str, day: Option<String>) -> anyhow::Result<Puzzle> {
+pub fn load(game: &str, status: &str, day: Option<String>) -> anyhow::Result<Puzzle> {
     let client = reqwest::blocking::Client::new();
 
     let data = match client
