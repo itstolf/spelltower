@@ -31,7 +31,7 @@ fn find_paths(tower: &Tower, root: &words::Node) -> Vec<Vec<(usize, usize)>> {
             paths.push(path.to_vec());
         }
 
-        let (oi, oj) = path.last().unwrap();
+        let &(oi, oj) = path.last().unwrap();
 
         for &(di, dj) in EIGHT_NEIGHBORS {
             let Some(i) = oi.checked_add_signed(di) else {

@@ -8,6 +8,9 @@ pub struct Node {
 
 impl Node {
     pub fn get(&self, c: char) -> Option<&Node> {
+        if !('A'..='Z').contains(&c) {
+            return None;
+        }
         self.children
             .get(c as usize - 'A' as usize)
             .map(|v| v.as_ref().map(|v| v.as_ref()))
